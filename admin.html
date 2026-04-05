@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration — Fidélité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --gold: #C8A96E; --gold-light: #E8CFA0; --gold-dark: #8B6914;
+      --dark: #0A0A14; --dark-2: #10101E; --dark-3: #161628; --dark-4: #1E1E38;
+      --text: #F0EDE8; --text-muted: #7A7A9A;
+      --success: #4CAF7D; --error: #E57373; --info: #64B5F6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 30% 50%, rgba(200,169,110,0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 20%, rgba(110,76,200,0.06) 0%, transparent 60%);
+    }
+    .login-box {
+      width: 100%; max-width: 380px; padding: 0 24px;
+    }
+    .login-logo { text-align: center; margin-bottom: 40px; }
+    .login-logo .icon { font-size: 40px; }
+    .login-logo h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--gold-light); margin-top: 12px; }
+    .login-logo p { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+    .login-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(200,169,110,0.15);
+      border-radius: 20px; padding: 32px;
+    }
+    .inp-wrap { margin-bottom: 16px; }
+    .inp-wrap label { display: block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .inp-wrap input {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--text); outline: none;
+    }
+    .inp-wrap input:focus { border-color: var(--gold); }
+    .btn-gold {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+      border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; color: var(--dark); cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-gold:hover { opacity: 0.9; }
+    .btn-gold:disabled { opacity: 0.5; }
+
+    /* ── ADMIN LAYOUT ── */
+    #admin-screen { display: none; min-height: 100vh; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+      background: var(--dark-2); border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column; padding: 24px 0; z-index: 10;
+    }
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--gold-light); }
+    .sidebar-logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; cursor: pointer; font-size: 14px;
+      color: var(--text-muted); transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .nav-item.active { color: var(--gold); background: rgba(200,169,110,0.06); border-left-color: var(--gold); }
+    .nav-icon { font-size: 16px; }
+    .sidebar-footer { margin-top: auto; padding: 0 20px; }
+    .btn-logout-admin {
+      width: 100%; padding: 10px; background: rgba(229,115,115,0.1);
+      border: 1px solid rgba(229,115,115,0.2); border-radius: 10px;
+      color: var(--error); font-size: 13px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .btn-logout-admin:hover { background: rgba(229,115,115,0.15); }
+
+    .main-content {
+      margin-left: 220px; padding: 32px; min-height: 100vh;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; color: var(--gold-light); }
+    .page-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── STATS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--dark-3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 20px;
+    }
+    .stat-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--gold); }
+    .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── TABLE ── */
+    .table-wrap { background: var(--dark-3); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+    .table-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .table-toolbar h3 { font-size: 14px; font-weight: 500; }
+    .search-input {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 8px 12px; font-size: 13px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; width: 200px;
+    }
+    .search-input:focus { border-color: var(--gold); }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 20px; text-align: left; font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody tr:last-child { border: none; }
+    td { padding: 14px 20px; font-size: 13px; }
+    .badge-pts {
+      display: inline-block; background: rgba(200,169,110,0.12);
+      border: 1px solid rgba(200,169,110,0.25); color: var(--gold);
+      border-radius: 6px; padding: 2px 10px; font-size: 12px; font-weight: 500;
+    }
+    .badge-reward {
+      background: rgba(76,175,125,0.12); border-color: rgba(76,175,125,0.3); color: var(--success);
+    }
+
+    /* ── ACTIONS ── */
+    .action-btns { display: flex; gap: 6px; }
+    .btn-sm {
+      padding: 6px 12px; border-radius: 8px; font-size: 12px;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; border: none; transition: all 0.15s;
+    }
+    .btn-add-pts { background: rgba(200,169,110,0.15); color: var(--gold); border: 1px solid rgba(200,169,110,0.3); }
+    .btn-add-pts:hover { background: rgba(200,169,110,0.25); }
+    .btn-notify-one { background: rgba(100,181,246,0.1); color: var(--info); border: 1px solid rgba(100,181,246,0.2); }
+    .btn-notify-one:hover { background: rgba(100,181,246,0.2); }
+    .btn-delete { background: rgba(229,115,115,0.1); color: var(--error); border: 1px solid rgba(229,115,115,0.2); }
+    .btn-delete:hover { background: rgba(229,115,115,0.2); }
+
+    /* ── NOTIFICATIONS PAGE ── */
+    .notif-form {
+      background: var(--dark-3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 24px; margin-bottom: 24px;
+    }
+    .notif-form h3 { font-size: 15px; font-weight: 500; margin-bottom: 16px; color: var(--gold-light); }
+    .notif-form textarea {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--text); outline: none; resize: vertical; min-height: 100px;
+    }
+    .notif-form textarea:focus { border-color: var(--gold); }
+    .notif-form select {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: var(--text); outline: none; margin-bottom: 12px; width: 100%;
+    }
+    .notif-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .btn-send-all {
+      padding: 12px 20px; background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      border: none; border-radius: 10px; color: var(--dark);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+
+    .notif-history { background: var(--dark-3); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+    .notif-history-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; font-weight: 500; }
+    .notif-row { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    .notif-row:last-child { border: none; }
+    .notif-row-msg { margin-bottom: 4px; }
+    .notif-row-meta { font-size: 11px; color: var(--text-muted); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--dark-3); border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 20px; padding: 28px; width: 100%; max-width: 400px;
+      transform: scale(0.95); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--gold-light); margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .modal input[type="number"] {
+      width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: var(--text); outline: none; margin-bottom: 16px;
+    }
+    .modal input:focus { border-color: var(--gold); }
+    .modal-btns { display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-confirm { flex: 1; padding: 12px; background: linear-gradient(135deg, var(--gold-dark), var(--gold)); border: none; border-radius: 10px; color: var(--dark); font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--dark-4); border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 10px; padding: 12px 18px;
+      font-size: 13px; color: var(--text); z-index: 200;
+      opacity: 0; transform: translateY(8px); transition: all 0.3s;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: rgba(76,175,125,0.4); }
+    .toast.error { border-color: rgba(229,115,115,0.4); }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sidebar-logo, .nav-item span, .sidebar-footer { display: none; }
+      .nav-item { justify-content: center; padding: 14px; }
+      .main-content { margin-left: 60px; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🔐</div>
+      <h1>Administration</h1>
+      <p>Carte de Fidélité</p>
+    </div>
+    <div class="login-card">
+      <div class="inp-wrap">
+        <label>Mot de passe administrateur</label>
+        <input type="password" id="inp-pwd" placeholder="••••••••••" />
+      </div>
+      <button class="btn-gold" id="btn-login">Accéder au tableau de bord</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h2>Fidélité</h2>
+      <p>Administration</p>
+    </div>
+    <nav>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Tableau de bord</span></div>
+      <div class="nav-item" data-page="customers"><span class="nav-icon">👥</span><span>Clients</span></div>
+      <div class="nav-item" data-page="notifications"><span class="nav-icon">📢</span><span>Notifications</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout-admin" id="btn-admin-logout">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Tableau de bord</h1>
+        <p>Vue d'ensemble du programme de fidélité</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Clients inscrits</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub">membres actifs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total de points distribués</div>
+          <div class="stat-value" id="stat-points">—</div>
+          <div class="stat-sub">points cumulés</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Récompenses débloquées</div>
+          <div class="stat-value" id="stat-rewards">—</div>
+          <div class="stat-sub">clients éligibles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Moy. points/client</div>
+          <div class="stat-value" id="stat-avg">—</div>
+          <div class="stat-sub">moyenne actuelle</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <h3>5 derniers inscrits</h3>
+        </div>
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>Points</th><th>Inscrit le</th></tr></thead>
+          <tbody id="recent-tbody"><tr><td colspan="4" class="empty-state">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="page-header">
+        <h1>Clients</h1>
+        <p>Gérez les membres et leurs points</p>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <h3 id="cust-count">Tous les clients</h3>
+          <input class="search-input" id="search-customers" placeholder="Rechercher un client…" />
+        </div>
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Points</th><th>Actions</th></tr></thead>
+          <tbody id="customers-tbody"><tr><td colspan="5" class="empty-state">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="page-notifications">
+      <div class="page-header">
+        <h1>Notifications</h1>
+        <p>Envoyez des messages à vos clients</p>
+      </div>
+
+      <div class="notif-form">
+        <h3>📢 Envoyer un message à tous les clients</h3>
+        <select id="notif-type">
+          <option value="info">📣 Information générale</option>
+          <option value="promo">🎉 Promotion</option>
+          <option value="points">⭐ Bonus points</option>
+          <option value="event">📅 Événement</option>
+        </select>
+        <textarea id="notif-message" placeholder="Rédigez votre message ici… Ex: Profitez de -20% ce week-end avec votre carte fidélité !"></textarea>
+        <div class="notif-actions">
+          <button class="btn-send-all" id="btn-send-all">🚀 Publier pour tous les clients</button>
+        </div>
+      </div>
+
+      <div class="notif-history">
+        <div class="notif-history-header">📋 Historique des notifications</div>
+        <div id="notif-history-list"><div class="empty-state">Aucune notification envoyée.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Points -->
+<div class="modal-overlay" id="modal-points">
+  <div class="modal">
+    <h3>Ajouter des points</h3>
+    <p id="modal-client-name">Client : —</p>
+    <input type="number" id="modal-pts-input" placeholder="Nombre de points à ajouter" min="1" max="10000" />
+    <div class="modal-btns">
+      <button class="btn-cancel" id="modal-cancel">Annuler</button>
+      <button class="btn-confirm" id="modal-confirm">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Notify One -->
+<div class="modal-overlay" id="modal-notify">
+  <div class="modal">
+    <h3>Message personnalisé</h3>
+    <p id="modal-notify-name">Envoyer à : —</p>
+    <textarea id="modal-notify-msg" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(200,169,110,0.2);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;resize:vertical;min-height:80px;margin-bottom:16px;" placeholder="Votre message…"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="modal-notify-cancel">Annuler</button>
+      <button class="btn-confirm" id="modal-notify-confirm">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="admin-toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── CONFIG — Remplacez par vos vraies valeurs Firebase ──
+const FIREBASE_CONFIG = {
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "VOTRE_PROJECT_ID.firebaseapp.com",
+  projectId: "VOTRE_PROJECT_ID",
+  storageBucket: "VOTRE_PROJECT_ID.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId: "VOTRE_APP_ID"
+};
+
+const ADMIN_PASSWORD = "admin1234"; // CHANGEZ CE MOT DE PASSE !
+const REWARD_THRESHOLD = 100;
+
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+function showToast(msg, type='') {
+  const t = $('admin-toast'); t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className='toast', 3000);
+}
+
+let allCustomers = [];
+let currentEditId = null, currentEditName = '';
+let currentNotifyId = null;
+
+// ── LOGIN ──
+$('inp-pwd').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+$('btn-login').addEventListener('click', doLogin);
+function doLogin() {
+  if ($('inp-pwd').value === ADMIN_PASSWORD) {
+    $('login-screen').style.display = 'none';
+    $('admin-screen').style.display = 'block';
+    loadAll();
+  } else { showToast('Mot de passe incorrect', 'error'); }
+}
+
+$('btn-admin-logout').addEventListener('click', () => {
+  $('admin-screen').style.display = 'none';
+  $('login-screen').style.display = 'flex';
+  $('inp-pwd').value = '';
+});
+
+// ── NAV ──
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    $('page-' + item.dataset.page).classList.add('active');
+    if (item.dataset.page === 'notifications') loadNotifHistory();
+  });
+});
+
+// ── LOAD ALL ──
+async function loadAll() {
+  try {
+    const snap = await getDocs(collection(db, 'customers'));
+    allCustomers = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    renderStats(); renderRecentTable(); renderCustomerTable(allCustomers);
+  } catch(e) { showToast('Erreur de connexion Firebase', 'error'); console.error(e); }
+}
+
+// ── STATS ──
+function renderStats() {
+  const total = allCustomers.length;
+  const pts = allCustomers.reduce((a,c) => a + (c.points||0), 0);
+  const rewards = allCustomers.filter(c => (c.points||0) >= REWARD_THRESHOLD).length;
+  $('stat-total').textContent = total;
+  $('stat-points').textContent = pts.toLocaleString('fr');
+  $('stat-rewards').textContent = rewards;
+  $('stat-avg').textContent = total ? Math.round(pts/total) : 0;
+}
+
+// ── RECENT TABLE ──
+function renderRecentTable() {
+  const sorted = [...allCustomers].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5);
+  const tbody = $('recent-tbody');
+  if (!sorted.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Aucun client.</td></tr>'; return; }
+  tbody.innerHTML = sorted.map(c => `
+    <tr>
+      <td>${esc(c.firstname)} ${esc(c.lastname)}</td>
+      <td style="color:var(--text-muted)">${esc(c.email)}</td>
+      <td><span class="badge-pts ${(c.points||0)>=REWARD_THRESHOLD?'badge-reward':''}">${c.points||0} pts</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : '—'}</td>
+    </tr>`).join('');
+}
+
+// ── CUSTOMER TABLE ──
+function renderCustomerTable(customers) {
+  $('cust-count').textContent = `${customers.length} client${customers.length>1?'s':''}`;
+  const tbody = $('customers-tbody');
+  if (!customers.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun client trouvé.</td></tr>'; return; }
+  tbody.innerHTML = customers.map(c => `
+    <tr>
+      <td><strong>${esc(c.firstname)} ${esc(c.lastname)}</strong></td>
+      <td style="color:var(--text-muted);font-size:12px">${esc(c.email)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${esc(c.phone||'—')}</td>
+      <td><span class="badge-pts ${(c.points||0)>=REWARD_THRESHOLD?'badge-reward':''}">${c.points||0} pts</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-sm btn-add-pts" onclick="openAddPoints('${c._docId}','${esc(c.firstname)} ${esc(c.lastname)}')">+ Points</button>
+          <button class="btn-sm btn-notify-one" onclick="openNotifyOne('${c._docId}','${esc(c.firstname)}')">Message</button>
+          <button class="btn-sm btn-delete" onclick="deleteCustomer('${c._docId}','${esc(c.firstname)} ${esc(c.lastname)}')">Suppr.</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ── SEARCH ──
+$('search-customers').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderCustomerTable(q ? allCustomers.filter(c =>
+    `${c.firstname} ${c.lastname} ${c.email}`.toLowerCase().includes(q)
+  ) : allCustomers);
+});
+
+// ── ADD POINTS MODAL ──
+window.openAddPoints = (docId, name) => {
+  currentEditId = docId; currentEditName = name;
+  $('modal-client-name').textContent = `Client : ${name}`;
+  $('modal-pts-input').value = '';
+  $('modal-points').classList.add('open');
+};
+$('modal-cancel').addEventListener('click', () => $('modal-points').classList.remove('open'));
+$('modal-confirm').addEventListener('click', async () => {
+  const pts = parseInt($('modal-pts-input').value);
+  if (!pts || pts < 1) { showToast('Entrez un nombre valide', 'error'); return; }
+  try {
+    const c = allCustomers.find(x => x._docId === currentEditId);
+    const newPts = (c.points || 0) + pts;
+    await updateDoc(doc(db, 'customers', currentEditId), { points: newPts });
+    c.points = newPts;
+    renderStats(); renderRecentTable(); renderCustomerTable(allCustomers);
+    showToast(`+${pts} points ajoutés à ${currentEditName}`, 'success');
+    $('modal-points').classList.remove('open');
+  } catch(e) { showToast('Erreur Firebase', 'error'); }
+});
+
+// ── NOTIFY ONE MODAL ──
+window.openNotifyOne = (docId, name) => {
+  currentNotifyId = docId;
+  $('modal-notify-name').textContent = `Envoyer à : ${name}`;
+  $('modal-notify-msg').value = '';
+  $('modal-notify').classList.add('open');
+};
+$('modal-notify-cancel').addEventListener('click', () => $('modal-notify').classList.remove('open'));
+$('modal-notify-confirm').addEventListener('click', async () => {
+  const msg = $('modal-notify-msg').value.trim();
+  if (!msg) { showToast('Message vide', 'error'); return; }
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      message: msg, target: currentNotifyId,
+      type: 'personal', createdAt: serverTimestamp()
+    });
+    showToast('Message envoyé !', 'success');
+    $('modal-notify').classList.remove('open');
+  } catch(e) { showToast('Erreur Firebase', 'error'); }
+});
+
+// ── DELETE ──
+window.deleteCustomer = async (docId, name) => {
+  if (!confirm(`Supprimer ${name} ? Cette action est irréversible.`)) return;
+  try {
+    await deleteDoc(doc(db, 'customers', docId));
+    allCustomers = allCustomers.filter(c => c._docId !== docId);
+    renderStats(); renderRecentTable(); renderCustomerTable(allCustomers);
+    showToast(`${name} supprimé(e)`, 'success');
+  } catch(e) { showToast('Erreur Firebase', 'error'); }
+};
+
+// ── SEND NOTIFICATION ──
+$('btn-send-all').addEventListener('click', async () => {
+  const msg = $('notif-message').value.trim();
+  const type = $('notif-type').value;
+  if (!msg) { showToast('Rédigez un message', 'error'); return; }
+  $('btn-send-all').disabled = true; $('btn-send-all').textContent = 'Publication…';
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      message: msg, type, target: 'all', createdAt: serverTimestamp()
+    });
+    $('notif-message').value = '';
+    showToast('Notification publiée pour tous les clients ! ✅', 'success');
+    loadNotifHistory();
+  } catch(e) { showToast('Erreur Firebase', 'error'); console.error(e); }
+  finally { $('btn-send-all').disabled=false; $('btn-send-all').textContent='🚀 Publier pour tous les clients'; }
+});
+
+// ── NOTIF HISTORY ──
+async function loadNotifHistory() {
+  try {
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const el = $('notif-history-list');
+    if (snap.empty) { el.innerHTML = '<div class="empty-state">Aucune notification.</div>'; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const n = d.data();
+      const date = n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString('fr-FR') : '—';
+      const target = n.target === 'all' ? '📢 Tous les clients' : `👤 Personnel`;
+      return `<div class="notif-row"><div class="notif-row-msg">${esc(n.message)}</div><div class="notif-row-meta">${target} · ${date}</div></div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Click outside modal
+[$('modal-points'), $('modal-notify')].forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

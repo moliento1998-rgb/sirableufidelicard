@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0D0D1A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ma Fidélité" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Carte de Fidélité</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --gold: #C8A96E;
+      --gold-light: #E8CFA0;
+      --gold-dark: #8B6914;
+      --dark: #0D0D1A;
+      --dark-2: #14142B;
+      --dark-3: #1E1E38;
+      --dark-4: #252545;
+      --text: #F0EDE8;
+      --text-muted: #9A9880;
+      --success: #4CAF7D;
+      --error: #E57373;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.12;
+    }
+    .orb-1 { width: 400px; height: 400px; background: var(--gold); top: -100px; right: -100px; animation: float1 12s ease-in-out infinite; }
+    .orb-2 { width: 300px; height: 300px; background: #6E4CC8; bottom: 100px; left: -80px; animation: float2 15s ease-in-out infinite; }
+    @keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,40px)} }
+    @keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-30px)} }
+
+    /* ── SCREENS ── */
+    .screen {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 430px;
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      padding: 0 24px;
+    }
+    .screen.hidden { display: none; }
+
+    /* ── REGISTER SCREEN ── */
+    .register-header {
+      padding-top: 60px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .brand-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      display: block;
+      filter: drop-shadow(0 0 20px rgba(200,169,110,0.4));
+    }
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--gold-light);
+    }
+    .brand-tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .form-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(200,169,110,0.15);
+      border-radius: 24px;
+      padding: 32px 24px;
+      backdrop-filter: blur(12px);
+    }
+    .form-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 400;
+      margin-bottom: 6px;
+      color: var(--gold-light);
+    }
+    .form-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .input-group input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--gold);
+      background: rgba(200,169,110,0.06);
+    }
+    .input-group input::placeholder { color: var(--text-muted); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+      border: none;
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--dark);
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+      transition: opacity 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .existing-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .existing-link span {
+      color: var(--gold);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── LOOKUP SCREEN ── */
+    .lookup-back {
+      padding-top: 50px;
+      margin-bottom: 12px;
+    }
+    .btn-back {
+      background: none; border: none;
+      color: var(--gold); font-size: 14px;
+      cursor: pointer; display: flex;
+      align-items: center; gap: 6px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── CARD SCREEN ── */
+    #screen-card {
+      padding-bottom: 40px;
+    }
+    .card-header {
+      padding-top: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .card-greeting {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--gold-light);
+    }
+    .card-greeting span { display: block; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.05em; }
+
+    .btn-logout {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ── THE CARD ── */
+    .loyalty-card {
+      background: linear-gradient(135deg, #1A1A35 0%, #0D0D1A 40%, #1E1A0D 100%);
+      border: 1px solid rgba(200,169,110,0.3);
+      border-radius: 24px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(200,169,110,0.1) inset;
+      margin-bottom: 24px;
+    }
+    .card-shimmer {
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(200,169,110,0.06) 50%, transparent 70%);
+      pointer-events: none;
+    }
+    .card-pattern {
+      position: absolute; right: -40px; top: -40px;
+      width: 200px; height: 200px;
+      border: 40px solid rgba(200,169,110,0.04);
+      border-radius: 50%;
+    }
+    .card-pattern-2 {
+      position: absolute; right: 10px; top: 10px;
+      width: 120px; height: 120px;
+      border: 25px solid rgba(200,169,110,0.04);
+      border-radius: 50%;
+    }
+
+    .card-brand {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 32px;
+    }
+    .card-brand-icon { font-size: 24px; }
+    .card-brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--gold-light);
+      letter-spacing: 0.06em;
+    }
+
+    .card-points-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .card-points-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 64px;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(200,169,110,0.3);
+    }
+    .card-points-unit {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-top: 28px;
+    }
+    .card-owner {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+    .card-id {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(200,169,110,0.1);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .progress-header {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .progress-header strong { color: var(--gold); }
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+      border-radius: 99px;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+      box-shadow: 0 0 10px rgba(200,169,110,0.4);
+    }
+    .progress-reward {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .reward-badge {
+      display: inline-block;
+      background: rgba(200,169,110,0.12);
+      border: 1px solid rgba(200,169,110,0.3);
+      color: var(--gold);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* ── REWARD UNLOCKED ── */
+    .reward-unlocked {
+      background: linear-gradient(135deg, rgba(76,175,125,0.12), rgba(76,175,125,0.06));
+      border: 1px solid rgba(76,175,125,0.3);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      animation: pulse-success 2s ease-in-out infinite;
+    }
+    @keyframes pulse-success { 0%,100%{box-shadow:0 0 0 0 rgba(76,175,125,0)} 50%{box-shadow:0 0 0 8px rgba(76,175,125,0.06)} }
+    .reward-unlocked .reward-icon { font-size: 36px; margin-bottom: 8px; }
+    .reward-unlocked h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--success); margin-bottom: 4px; }
+    .reward-unlocked p { font-size: 13px; color: var(--text-muted); }
+
+    /* ── NOTIFICATIONS ── */
+    .notifications-section {
+      margin-top: 8px;
+    }
+    .notif-title {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .notif-item {
+      background: rgba(255,255,255,0.03);
+      border-left: 2px solid var(--gold);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .notif-date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .no-notif { font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px; }
+
+    /* ── QR CODE ── */
+    .qr-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(200,169,110,0.1);
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .qr-section p { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+    #qr-canvas { border-radius: 8px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--dark-3); border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 12px; padding: 12px 20px;
+      font-size: 13px; color: var(--text);
+      z-index: 999; opacity: 0;
+      transition: all 0.3s; white-space: nowrap;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(76,175,125,0.4); }
+    .toast.error { border-color: rgba(229,115,115,0.4); }
+
+    /* ── LOADING ── */
+    .loading-screen {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--dark);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: opacity 0.5s;
+    }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loader-ring {
+      width: 50px; height: 50px;
+      border: 2px solid rgba(200,169,110,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--text-muted); }
+
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 20px 0; }
+
+    /* ── RESPONSIVE FIXES ── */
+    @media (max-height: 700px) {
+      .register-header { padding-top: 30px; margin-bottom: 24px; }
+      .brand-icon { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+</div>
+
+<!-- Loading -->
+<div class="loading-screen" id="loading">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Chargement…</div>
+</div>
+
+<!-- SCREEN : Inscription -->
+<div class="screen" id="screen-register">
+  <div class="register-header">
+    <span class="brand-icon" id="r-brand-icon">🏪</span>
+    <div class="brand-name" id="r-brand-name">Ma Boutique</div>
+    <div class="brand-tagline">Programme de fidélité</div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-title">Rejoignez-nous</div>
+    <div class="form-subtitle">Créez votre carte de fidélité et commencez à cumuler des points dès aujourd'hui.</div>
+
+    <div class="input-group">
+      <label>Prénom</label>
+      <input type="text" id="inp-firstname" placeholder="Jean" autocomplete="given-name" />
+    </div>
+    <div class="input-group">
+      <label>Nom</label>
+      <input type="text" id="inp-lastname" placeholder="Dupont" autocomplete="family-name" />
+    </div>
+    <div class="input-group">
+      <label>Adresse e-mail</label>
+      <input type="email" id="inp-email" placeholder="jean@exemple.fr" autocomplete="email" />
+    </div>
+    <div class="input-group">
+      <label>Téléphone</label>
+      <input type="tel" id="inp-phone" placeholder="+33 6 00 00 00 00" autocomplete="tel" />
+    </div>
+
+    <button class="btn-primary" id="btn-register">Créer ma carte</button>
+  </div>
+
+  <div class="existing-link">
+    Déjà membre ? <span id="link-lookup">Retrouver ma carte</span>
+  </div>
+</div>
+
+<!-- SCREEN : Retrouver sa carte -->
+<div class="screen hidden" id="screen-lookup">
+  <div class="lookup-back">
+    <button class="btn-back" id="btn-back-lookup">← Retour</button>
+  </div>
+
+  <div class="form-card" style="margin-top: 20px;">
+    <div class="form-title">Retrouver ma carte</div>
+    <div class="form-subtitle">Entrez votre adresse e-mail pour accéder à votre carte de fidélité.</div>
+
+    <div class="input-group">
+      <label>Adresse e-mail</label>
+      <input type="email" id="inp-lookup-email" placeholder="jean@exemple.fr" autocomplete="email" />
+    </div>
+
+    <button class="btn-primary" id="btn-lookup">Accéder à ma carte</button>
+  </div>
+</div>
+
+<!-- SCREEN : Carte -->
+<div class="screen hidden" id="screen-card">
+  <div class="card-header">
+    <div>
+      <div class="card-greeting">
+        <span>Bonjour,</span>
+        <span id="card-name">Jean D.</span>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">Déconnexion</button>
+  </div>
+
+  <!-- La Carte -->
+  <div class="loyalty-card">
+    <div class="card-shimmer"></div>
+    <div class="card-pattern"></div>
+    <div class="card-pattern-2"></div>
+    <div class="card-brand">
+      <span class="card-brand-icon" id="c-brand-icon">🏪</span>
+      <span class="card-brand-name" id="c-brand-name">Ma Boutique</span>
+    </div>
+    <div class="card-points-label">Solde de points</div>
+    <div>
+      <span class="card-points-value" id="card-points">0</span>
+      <span class="card-points-unit">pts</span>
+    </div>
+    <div class="card-footer">
+      <div class="card-owner" id="card-fullname">Jean Dupont</div>
+      <div class="card-id" id="card-id">#000000</div>
+    </div>
+  </div>
+
+  <!-- Progression -->
+  <div class="progress-section" id="progress-section">
+    <div class="progress-header">
+      <span>Progression</span>
+      <span><strong id="prog-current">0</strong> / <span id="prog-max">100</span> pts</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="prog-fill"></div>
+    </div>
+    <div class="progress-reward">
+      Prochaine récompense : <span class="reward-badge" id="prog-reward">10€ de réduction</span>
+    </div>
+  </div>
+
+  <!-- Récompense débloquée -->
+  <div class="reward-unlocked hidden" id="reward-unlocked">
+    <div class="reward-icon">🎁</div>
+    <h3>Récompense débloquée !</h3>
+    <p id="reward-desc">Montrez cette carte pour profiter de votre avantage.</p>
+  </div>
+
+  <!-- QR Code -->
+  <div class="qr-section">
+    <canvas id="qr-canvas" width="140" height="140"></canvas>
+    <p>Présentez ce QR code en caisse</p>
+  </div>
+
+  <!-- Notifications -->
+  <div class="notifications-section">
+    <div class="notif-title">Actualités & Offres</div>
+    <div id="notif-list"><div class="no-notif">Aucune actualité pour le moment.</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── Config (inline pour GitHub Pages — modifier ici ou charger depuis firebase-config.js) ──
+const FIREBASE_CONFIG = {
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "VOTRE_PROJECT_ID.firebaseapp.com",
+  projectId: "VOTRE_PROJECT_ID",
+  storageBucket: "VOTRE_PROJECT_ID.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId: "VOTRE_APP_ID"
+};
+
+const LOYALTY_CONFIG = {
+  businessName: "Ma Boutique",
+  businessLogo: "🏪",
+  pointsPerEuro: 1,
+  rewardThreshold: 100,
+  rewardDescription: "10€ de réduction",
+};
+
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getFirestore(app);
+
+// ── Utils ──
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove('hidden');
+const hide = id => $(id).classList.add('hidden');
+
+function showToast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function hideLoading() {
+  setTimeout(() => $('loading').classList.add('hidden'), 600);
+}
+
+// ── Inject branding ──
+document.querySelectorAll('[id$="-brand-icon"], .card-brand-icon').forEach(el => el.textContent = LOYALTY_CONFIG.businessLogo);
+document.querySelectorAll('[id$="-brand-name"], .card-brand-name').forEach(el => el.textContent = LOYALTY_CONFIG.businessName);
+$('prog-max').textContent = LOYALTY_CONFIG.rewardThreshold;
+$('prog-reward').textContent = LOYALTY_CONFIG.rewardDescription;
+$('reward-desc').textContent = `Montrez cette carte pour obtenir : ${LOYALTY_CONFIG.rewardDescription}`;
+
+// ── Generate short ID ──
+function genId() { return Math.random().toString(36).substr(2, 7).toUpperCase(); }
+
+// ── QR Code generator (simple canvas implementation) ──
+function drawSimpleQR(canvas, text) {
+  const ctx = canvas.getContext('2d');
+  const size = 140; const cellSize = 5;
+  ctx.fillStyle = '#1E1E38';
+  ctx.fillRect(0, 0, size, size);
+  // Simple visual representation (for full QR use a library in production)
+  const hash = [...text].reduce((a,c) => ((a << 5) - a + c.charCodeAt(0))|0, 0);
+  const seed = Math.abs(hash);
+  ctx.fillStyle = '#C8A96E';
+  for(let i = 0; i < 28; i++) {
+    for(let j = 0; j < 28; j++) {
+      const v = ((seed ^ (i*31+j*17) ^ (i*j)) & 1);
+      if(v) ctx.fillRect(i*5, j*5, 4, 4);
+    }
+  }
+  // Corner squares
+  [[0,0],[23,0],[0,23]].forEach(([x,y]) => {
+    ctx.strokeStyle = '#C8A96E'; ctx.lineWidth = 2;
+    ctx.strokeRect(x*5-1, y*5-1, 27, 27);
+    ctx.fillRect(x*5+4, y*5+4, 15, 15);
+  });
+}
+
+// ── Display card ──
+function displayCard(user) {
+  $('card-name').textContent = user.firstname + ' ' + user.lastname.charAt(0) + '.';
+  $('card-fullname').textContent = user.firstname + ' ' + user.lastname;
+  $('card-id').textContent = '#' + (user.id || '000000');
+  $('card-points').textContent = user.points || 0;
+  $('prog-current').textContent = user.points || 0;
+
+  const pct = Math.min(100, ((user.points || 0) / LOYALTY_CONFIG.rewardThreshold) * 100);
+  setTimeout(() => $('prog-fill').style.width = pct + '%', 100);
+
+  if ((user.points || 0) >= LOYALTY_CONFIG.rewardThreshold) {
+    hide('progress-section');
+    show('reward-unlocked');
+  }
+
+  drawSimpleQR($('qr-canvas'), user.email + '|' + (user.id || ''));
+  loadNotifications();
+
+  hide('screen-register'); hide('screen-lookup');
+  show('screen-card');
+  localStorage.setItem('loyaltyEmail', user.email);
+}
+
+// ── Load notifications ──
+async function loadNotifications() {
+  try {
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const list = $('notif-list');
+    if (snap.empty) { list.innerHTML = '<div class="no-notif">Aucune actualité pour le moment.</div>'; return; }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const n = d.data();
+      const el = document.createElement('div');
+      el.className = 'notif-item';
+      const date = n.createdAt?.toDate ? n.createdAt.toDate().toLocaleDateString('fr-FR') : '';
+      el.innerHTML = `${n.message}<div class="notif-date">${date}</div>`;
+      list.appendChild(el);
+    });
+  } catch(e) { console.error(e); }
+}
+
+// ── Auto-login ──
+window.addEventListener('DOMContentLoaded', async () => {
+  const email = localStorage.getItem('loyaltyEmail');
+  if (email) {
+    try {
+      const q = query(collection(db, 'customers'), where('email', '==', email));
+      const snap = await getDocs(q);
+      if (!snap.empty) { displayCard(snap.docs[0].data()); hideLoading(); return; }
+    } catch(e) {}
+  }
+  hideLoading();
+});
+
+// ── Register ──
+$('btn-register').addEventListener('click', async () => {
+  const firstname = $('inp-firstname').value.trim();
+  const lastname = $('inp-lastname').value.trim();
+  const email = $('inp-email').value.trim().toLowerCase();
+  const phone = $('inp-phone').value.trim();
+
+  if (!firstname || !lastname || !email || !phone) { showToast('Veuillez remplir tous les champs', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Email invalide', 'error'); return; }
+
+  $('btn-register').disabled = true;
+  $('btn-register').textContent = 'Création…';
+
+  try {
+    const q = query(collection(db, 'customers'), where('email', '==', email));
+    const existing = await getDocs(q);
+    if (!existing.empty) { displayCard(existing.docs[0].data()); showToast('Carte retrouvée !', 'success'); return; }
+
+    const id = genId();
+    const user = { id, firstname, lastname, email, phone, points: 0, createdAt: new Date().toISOString() };
+    await setDoc(doc(db, 'customers', id), user);
+    displayCard(user);
+    showToast('Carte créée avec succès ! 🎉', 'success');
+  } catch(e) {
+    console.error(e); showToast('Erreur, réessayez.', 'error');
+  } finally {
+    $('btn-register').disabled = false;
+    $('btn-register').textContent = 'Créer ma carte';
+  }
+});
+
+// ── Lookup ──
+$('link-lookup').addEventListener('click', () => { hide('screen-register'); show('screen-lookup'); });
+$('btn-back-lookup').addEventListener('click', () => { hide('screen-lookup'); show('screen-register'); });
+
+$('btn-lookup').addEventListener('click', async () => {
+  const email = $('inp-lookup-email').value.trim().toLowerCase();
+  if (!email) { showToast('Entrez votre email', 'error'); return; }
+
+  $('btn-lookup').disabled = true; $('btn-lookup').textContent = 'Recherche…';
+  try {
+    const q = query(collection(db, 'customers'), where('email', '==', email));
+    const snap = await getDocs(q);
+    if (snap.empty) { showToast('Aucune carte trouvée pour cet email.', 'error'); return; }
+    displayCard(snap.docs[0].data());
+    showToast('Bienvenue ! 👋', 'success');
+  } catch(e) {
+    showToast('Erreur, réessayez.', 'error');
+  } finally {
+    $('btn-lookup').disabled = false; $('btn-lookup').textContent = 'Accéder à ma carte';
+  }
+});
+
+// ── Logout ──
+$('btn-logout').addEventListener('click', () => {
+  localStorage.removeItem('loyaltyEmail');
+  hide('screen-card'); show('screen-register');
+  $('prog-fill').style.width = '0%';
+  show('progress-section'); hide('reward-unlocked');
+});
+</script>
+</body>
+</html>
